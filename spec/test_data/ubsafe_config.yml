@@ -1,0 +1,19 @@
+:test_settings:
+  :setting_one: '1'
+
+:backups:
+  :git:
+    :enabled: true
+    :source_tree: './spec/test_data/sources/git'
+    :backup_host: :test
+  # :mysql:
+  #   
+  # :svn:
+  #   
+  # :wiki:
+:backup_hosts:
+  :test:
+    :hostname: '10.1.10.52'
+    :user_name: 'tflynn'
+    :password: 'b3e1r4t1'
+    :base_backup_directory: '/Users/tflynn/Everything/Activities/git/ubsafe/spec/tmp/targets'

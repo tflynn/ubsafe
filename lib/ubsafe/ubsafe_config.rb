@@ -58,6 +58,7 @@ module UBSafe
       if args and args.kind_of?(Array)
         options = OptionParser.new
         options.on("-c","--config CONFIG_FILE", String, "Name of configuration file") {|val| parsed_options[:config_file] = val}
+        options.on("-b","--backup-name BACKUP_NAME", String, 'Backup Name') {|val| parsed_options[:backup_name] = val.downcase.to_sym}
         parsed_options[:remainder] = options.parse(*args)
         parsed_options[:options_help_text] = options.to_s
       end

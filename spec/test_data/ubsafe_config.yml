@@ -2,10 +2,10 @@
   :setting_one: '1'
 
 :logging:
-  :log_identifier: => 'ubsafe'
-  :log_directory: => './spec/tmp/logs'
-  :log_filename_pattern: => 'ubsafe.log'
-  :log_level: => :debug
+  :log_identifier: 'ubsafe'
+  :log_directory: './spec/tmp/logs'
+  :log_filename_pattern: 'ubsafe.log'
+  :log_level: :debug
 
 :backups:
   :git1:

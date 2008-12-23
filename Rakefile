@@ -26,6 +26,7 @@ gem_spec = Gem::Specification.new do |s|
   s.default_executable = "ubsafe"
   
   s.add_dependency("rspec", "1.1.8")
+  s.add_dependency("logging", "0.9.4")
   
   #s.extensions << ""
   #s.extra_rdoc_files = ["README"]

@@ -1,5 +1,38 @@
 require 'optparse'
 require 'yaml'
+require 'erb'
+
+module Logging
+  module Layouts
+    # Layout to be shared among all StandardizedLogger logging classes
+    class UBSafeLoggerLayout < ::Logging::Layout
+
+      attr_reader :app_name
+      
+      def initialize(configuration)
+        @configuration = configuration
+        @app_name = configuration[:log_identifier]
+      end
+      
+      # call-seq:
+      #    format( event )
+      #
+      # Returns a string representation of the given loggging _event_. See the
+      #
+      def format( event )
+        msg = format_obj(event.data)
+        severity_text = ::Logging::LNAMES[event.level]
+        preamble = "#{Time.now.utc.strftime("%Y-%m-%d %H:%M:%S")}\tUTC\t[#{severity_text}]\t[#{hostname}]\t[#{app_name}]\t[#{$$}]\t"
+        full_message =  preamble + (msg || '[nil]')
+        full_message.gsub!(/\n/,' ')
+        full_message += "\n" unless full_message =~ /\n$/
+        return full_message
+      end
+
+    end
+    
+  end
+end
 
 module UBSafe
   
@@ -19,6 +52,14 @@ module UBSafe
         return @@config_instance
       end
       
+      ## Get logger
+      #
+      # @return [Logging::Logger] Common logger instance
+      #
+      def log
+        return defined?(@@logger) ? @@logger : nil
+      end
+      
     end
 
     ##
@@ -34,8 +75,31 @@ module UBSafe
       if @options[:config_file]
         @options.merge!(load_config_file(@options[:config_file]))
       end
+      configure_logging
     end
 
+    ## 
+    # Get the full set of configuration options for the specified backup
+    #
+    # @param [Symbol] backup_name
+    # @return [Hash] (Flattened?) hash with all the options for this backup. Nil if this backup is not present or enabled.
+    #
+    def full_options(backup_name)
+      backup_options = {}
+      # Get backup defaults
+      backup_options.merge!(@options[:backup_defaults].dup_contents_1_level)
+      # Get the specific backup definition
+      backup_options.merge!(@options[:backups][backup_name.to_sym].dup_contents_1_level)
+      return nil unless backup_options[:enabled]
+      # Expand the backup host reference
+      selected_host = backup_options[:backup_host]
+      backup_options.merge!(@options[:backup_hosts][selected_host].dup_contents_1_level)
+      # Expand the backup type reference
+      selected_backup_type = backup_options[:backup_type]
+      backup_options.merge!(@options[:backup_types][selected_backup_type].dup_contents_1_level)
+      return backup_options
+    end
+    
     private
     
     ##
@@ -58,7 +122,7 @@ module UBSafe
       if args and args.kind_of?(Array)
         options = OptionParser.new
         options.on("-c","--config CONFIG_FILE", String, "Name of configuration file") {|val| parsed_options[:config_file] = val}
-        options.on("-b","--backup-name BACKUP_NAME", String, 'Backup Name') {|val| parsed_options[:backup_name] = val.downcase.to_sym}
+        options.on("-n","--name BACKUP_NAME", String, 'Backup Name') {|val| parsed_options[:backup_name] = val.downcase.to_sym}
         parsed_options[:remainder] = options.parse(*args)
         parsed_options[:options_help_text] = options.to_s
       end
@@ -74,7 +138,8 @@ module UBSafe
     def load_config_file(config_file_name)
       contents = nil
       begin
-        contents = YAML.load_file(config_file_name)
+        template = ERB.new(File.open(config_file_name).read)
+        contents = YAML.load(template.result)
       rescue Exception => ex
         puts "SEVERE - Unable to load configuration file '#{config_file_name}'"
         # puts ex.to_s
@@ -83,6 +148,30 @@ module UBSafe
       end
       return contents
     end
+    
+    ##
+    # Initialize logging
+    #
+    def configure_logging
+      logger_configuration = @options[:logging]
+      @@logger = Logging::Logger[logger_configuration[:log_identifier]]
+      logger_layout = Logging::Layouts::UBSafeLoggerLayout.new(logger_configuration)
+      qualified_logger_file_name = File.expand_path(File.join(logger_configuration[:log_directory],logger_configuration[:log_filename_pattern]))
+      @@logger.add_appenders(
+          Logging::Appenders::File.new(qualified_logger_file_name, :layout => logger_layout)
+      )
+      @@logger.level = logger_configuration[:log_level]
+    end
+    
+    # Get the (cached) hostname for this machine
+    def hostname
+      unless defined?(@@hostname)
+        @@hostname = `hostname`.chomp.strip.downcase
+      end
+      return @@hostname
+    end
+    
+    
   end
   
 end

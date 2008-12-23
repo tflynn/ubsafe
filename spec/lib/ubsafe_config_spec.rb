@@ -41,5 +41,17 @@ describe 'UBSafe::Config' do
     config.options[:test_settings][:setting_one].should == '1'
   end
   
+  it 'should expand any specified backup entry' do
+    config_file_name = './spec/test_data/ubsafe_config.yml'
+    args = ['-c',config_file_name]
+    config = UBSafe::Config.config
+    config.load(args)
+    expanded_options = config.full_options('git1')
+    # Check random options to make sure expansion works
+    expanded_options.has_key?(:number_format).should be_true
+    expanded_options.has_key?(:backup_style).should be_true
+    expanded_options.has_key?(:hostname).should be_true
+    expanded_options.has_key?(:source_tree).should be_true
+  end
   
 end

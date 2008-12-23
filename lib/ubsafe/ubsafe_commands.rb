@@ -27,9 +27,9 @@ module UBSafe
       #
       def initialize(args)
         @config = UBSafe::Config.config
-        config.load(args)
-        @backup_name = config.options[:backup_name]
-        @backup_options = config.full_options(backup_name)
+        @config.load(args)
+        @backup_name = @config.options[:backup_name]
+        @backup_options = @config.full_options(@backup_name)
       end
       
       ##

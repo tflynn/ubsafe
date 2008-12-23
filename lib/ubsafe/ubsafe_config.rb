@@ -122,18 +122,24 @@ module UBSafe
     # Initialize logging
     #
     def configure_logging
-      logger_configuration = @options[:logging]
-      @@logger = Logging::Logger[logger_configuration[:log_identifier]]
-      logger_layout = Logging::Layouts::UBSafeLoggerLayout.new(logger_configuration)
-      FileUtils.mkdir_p(File.expand_path(logger_configuration[:log_directory]))
-      qualified_logger_file_name = File.expand_path(File.join(logger_configuration[:log_directory],logger_configuration[:log_filename_pattern]))
+      @logger_configuration = @options[:logging]
+      @@logger = Logging::Logger[@logger_configuration[:log_identifier]]
+      logger_layout = Logging::Layouts::UBSafeLoggerLayout.new(@logger_configuration)
+      FileUtils.mkdir_p(File.expand_path(@logger_configuration[:log_directory]))
+      qualified_logger_file_name = File.expand_path(File.join(@logger_configuration[:log_directory],@logger_configuration[:log_filename_pattern]))
       @@logger.add_appenders(
-          Logging::Appenders::File.new(qualified_logger_file_name, :layout => logger_layout)
+          #Logging::Appenders::File.new(qualified_logger_file_name, :layout => logger_layout)
+          Logging::Appenders::RollingFile.new(@logger_configuration[:log_identifier],
+            { :filename => qualified_logger_file_name, 
+              :age => @logger_configuration[:log_rolling_frequency],
+              :keep => @logger_configuration[:logs_to_retain],
+              :safe => true,
+              :layout => logger_layout
+            }
+            
+          )
       )
-      puts "logger_configuration #{logger_configuration.inspect}"
-      puts "logger_configuration[:log_level] #{logger_configuration[:log_level]}"
-      #@@logger.level = logger_configuration[:log_level]
-      @@logger.level = :debug
+      @@logger.level = @logger_configuration[:log_level]
     end
     
     # Get the (cached) hostname for this machine

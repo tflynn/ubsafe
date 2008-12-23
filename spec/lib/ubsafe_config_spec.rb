@@ -1,9 +1,12 @@
+require 'fileutils'
+
 require File.expand_path(File.join(File.dirname(__FILE__), "..", "spec_helper"))
 
 describe 'UBSafe::Config' do
   
   before :each do
     ENV['UBSAFE_CONFIG_FILE'] = nil
+    FileUtils.rm_rf('./spec/tmp')
   end
   
   it 'should allow a configuration file to be specified from an environment parameter'  do

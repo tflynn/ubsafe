@@ -30,7 +30,9 @@ module UBSafe
         # Copy to destination
         # Remove from source tree
         backup_steps = [:before_source_backup,:create_source_backup,:after_source_backup,
-          :before_rotate_destination_files, :rotate_destination_files, :after_rotate_destination_files
+          :before_rotate_destination_files, :rotate_destination_files, :after_rotate_destination_files,
+          :before_copy_backup, :copy_backup, :after_copy_backup,
+          :before_clean_source, :clean_source, :after_clean_source
           ]
         backup_steps.each do |backup_step|
           status = self.send(backup_step)
@@ -60,15 +62,20 @@ module UBSafe
       ##
       # Create source backup
       #
+      # @param [Hash] backup_options
+      # @param [String] backup_name
       # @return [Symbol] :success or :failure
       #
-      def create_source_backup
+      def create_source_backup(backup_options = nil,backup_name = nil)
 
+        backup_options ||= @backup_options
+        backup_name ||= @backup_name
+        
         # Fully qualify directories
-        source_tree = File.expand_path(@backup_options[:source_tree])
-        tmp_dir = File.expand_path(@backup_options[:temporary_directory])
+        source_tree = File.expand_path(backup_options[:source_tree])
+        tmp_dir = File.expand_path(backup_options[:temporary_directory])
           
-        if @backup_options[:backup_style] == :tar_gz
+        if backup_options[:backup_style] == :tar_gz
           status = nil
           # Run command somewhere sensible
           FileUtils.mkdir_p(tmp_dir)
@@ -79,14 +86,14 @@ module UBSafe
             cmd_status = $?
             status = cmd_status == 0 ? :success : :failure
             if status == :success
-              @log.info("Backup '#{@backup_name}' succeeded")
+              @log.info("Backup '#{backup_name}' succeeded")
             else
-              @log.error("Backup '#{@backup_name}' failed")
+              @log.error("Backup '#{backup_name}' failed")
             end
           end
           return status
         end
-        @log.error("Backup '#{@backup_name}' - backup type specified is not supported")
+        @log.error("Backup '#{backup_name}' - backup type specified is not supported")
         return :failure
       end
       
@@ -109,13 +116,71 @@ module UBSafe
       end
       
       ##
-      # Rotate destination files
+      # Rotate destination files. Check all the conditions
       #
       # @param [Hash] backup_options
       # @param [String] backup_name
       # @return [Symbol] :success or :failure
       #
       def rotate_destination_files(backup_options = nil,backup_name = nil)
+        backup_options ||= @backup_options
+        backup_name ||= @backup_name
+        begin
+          remote_directory = File.join(backup_options[:base_backup_directory],backup_name)
+          backup_file_name = get_backup_file_name(backup_options)
+          remote_file_name = File.join(remote_directory,backup_file_name)
+          remote_file_mtime = get_remote_modified_timestamp(remote_file_name,backup_options,backup_name)
+          return_status = nil
+
+          backup_frequency = backup_options[:backup_frequency]
+          case backup_frequency
+            when Integer
+              # Explicit age
+              if remote_file_mtime
+                if (Time.now.utc - remote_file_mtime ) > backup_frequency
+                  return_status = rotate_destination_files_unconditionally(backup_options,backup_name)
+                end
+              end
+            when :daily
+              if remote_file_mtime
+                now = Time.now.utc
+                if (now.day != remote_file_mtime.day) or (now - remote_file_mtime) > 1.day
+                  return_status = rotate_destination_files_unconditionally(backup_options,backup_name)
+                end
+              end
+            when :weekly
+              if remote_file_mtime
+                if (Time.now.utc - remote_file_mtime) > 1.week
+                  return_status = rotate_destination_files_unconditionally(backup_options,backup_name)
+                end
+              end
+            when :monthly
+              if remote_file_mtime
+                now = Time.now.utc
+                if (now.month != remote_file_mtime.month) or (now - remote_file_mtime) > 1.month
+                  return_status = rotate_destination_files_unconditionally(backup_options,backup_name)
+                end
+              end
+          end
+        rescue Exception => ex
+          @log.error("Error detected while determining whether to rotate files")
+          @log.error(ex.to_s)
+          @log.error(ex.backtrace.join("\n"))
+          return_status = :failure
+        end
+        
+        return return_status
+        
+      end
+      
+      ##
+      # Rotate destination files unconditionally. Assume someone else has checked whether this is needed.
+      #
+      # @param [Hash] backup_options
+      # @param [String] backup_name
+      # @return [Symbol] :success or :failure
+      #
+      def rotate_destination_files_unconditionally(backup_options = nil,backup_name = nil)
         # Assume that all checks have been performed before calling this method. 
         # This method will rotate files unconditionally
 
@@ -149,11 +214,11 @@ module UBSafe
           end
           # Need to reverse order
           remote_backup_files.size.downto(1) do |current_generation|
-            #puts "rotate_destination_files current_generation #{current_generation}"
+            #puts "rotate_destination_files_unconditionally current_generation #{current_generation}"
             file_name_current_generation = remote_backup_files[current_generation - 1]
-            #puts "rotate_destination_files file_name_current_generation #{file_name_current_generation}"
+            #puts "rotate_destination_files_unconditionally file_name_current_generation #{file_name_current_generation}"
             file_name_previous_generation = backup_options[:all_possible_file_names][current_generation]
-            #puts "rotate_destination_files file_name_previous_generation #{file_name_previous_generation}"
+            #puts "rotate_destination_files_unconditionally file_name_previous_generation #{file_name_previous_generation}"
             remote_cmd = "mv #{File.join(remote_directory_name,file_name_current_generation)} #{File.join(remote_directory_name,file_name_previous_generation)}"
             cmd_status, cmd_output = ssh_cmd(remote_cmd)
             return :failure unless cmd_status == :success
@@ -165,6 +230,63 @@ module UBSafe
 
       end
 
+      ##
+      # Hook to allow customization before copying backup
+      #
+      # @return [Symbol] :success or :failure
+      #
+      def before_copy_backup
+        return :success
+      end
+
+      ##
+      # Hook to allow customization after copying backup
+      #
+      # @return [Symbol] :success or :failure
+      #
+      def after_copy_backup
+        return :success
+      end
+
+      ##
+      # Copy backup 
+      #
+      # @return [Symbol] :success or :failure
+      #
+      def copy_backup
+        
+        return :success
+      end
+
+      ##
+      # Hook to allow customization before cleaning source
+      #
+      # @return [Symbol] :success or :failure
+      #
+      def before_clean_source
+        return :success
+      end
+
+      ##
+      # Hook to allow customization after cleaning source
+      #
+      # @return [Symbol] :success or :failure
+      #
+      def after_clean_source
+        return :success
+      end
+
+      ##
+      # Clean Source - remove (temporary) backup files from source
+      #
+      # @return [Symbol] :success or :failure
+      #
+      def clean_source
+        return :success
+      end
+
+
+      
       ##
       # Get backup name - use the template defined in the configuration file
       #
@@ -240,18 +362,43 @@ module UBSafe
       end
       
       ##
+      # Get the modified time stamp for a remote file
+      #
+      # @param [String] file_name Fully qualified file name
+      # @param [Hash] backup_options
+      # @param [String] backup_name
+      # @return [Time] File modification time or nil if no file found remotely
+      #
+      def get_remote_modified_timestamp(file_name,backup_options = nil,backup_name = nil)
+        backup_options ||= @backup_options
+        backup_name ||= @backup_name
+        remote_cmd = "ubsafe_file_mtime #{file_name}"
+        cmd_status, cmd_output = ssh_cmd(remote_cmd,backup_options,backup_name)
+        file_mtime = nil
+        if cmd_status == :success and (not cmd_output.empty?) and (cmd_output[0] != '')
+          #puts "get_remote_modified_timestamp file_name #{file_name} #{cmd_output[0]}"
+          file_mtime = Time.utc(*ParseDate.parsedate(cmd_output[0]))
+        end
+        return file_mtime  
+      end
+      
+      ##
       # Issue an ssh command
       #
       # @param [String] cmd Command to send
+      # @param [Hash] backup_options
+      # @param [String] backup_name
       # @return [Array] [command status, command output]
       #
-      def ssh_cmd(cmd)
-        ssh_user = @backup_options[:user_name]
-        ssh_host = @backup_options[:hostname]
-        ssh_password = @backup_options[:password]
+      def ssh_cmd(cmd,backup_options = nil,backup_name = nil)
+        backup_options ||= @backup_options
+        backup_name ||= @backup_name
+        ssh_user = backup_options[:user_name]
+        ssh_host = backup_options[:hostname]
+        ssh_password = backup_options[:password]
         if ssh_password
           # Need to use expect for the password if certs don't work
-          cmd_exe = File.expand_path(File.join('./bin','ubsafe_ssh_cmd.expect'))
+          cmd_exe = File.expand_path(File.join(::UBSAFE_ROOT, 'bin','ubsafe_ssh_cmd.expect'))
           full_cmd = "#{cmd_exe} #{ssh_user}@#{ssh_host} \"#{ssh_password}\" \"#{cmd}\""
           masked_full_cmd = "#{cmd_exe} #{ssh_user}@#{ssh_host} [PASSWORD] \"#{cmd}\""
         else
@@ -262,7 +409,7 @@ module UBSafe
         #puts "About to issue \"#{full_cmd}\""
         cmd_output = `#{full_cmd}`
         cmd_status = $?
-        @log.info("Executed ssh status #{cmd_status} command \"#{masked_full_cmd}\"")
+        @log.debug("Executed ssh status #{cmd_status} command \"#{masked_full_cmd}\"")
         cmd_output_lines = cmd_output.split("\n").reject {|line| line =~ /spawn/i or line =~ /password/i }
         cmd_output_cleaned = []
         cmd_output_lines.each do |cmd_output_line|

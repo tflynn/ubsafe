@@ -31,7 +31,7 @@
 :backup_types:
   :git:
     :backup_style: :tar_gz
-    :backup_frequency: <%= 1.day %>
+    :backup_frequency: :daily
     :backup_file_name_template: '%f.tar.gz.%n'
     :backups_to_retain: 30
 

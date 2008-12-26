@@ -1,5 +1,11 @@
 class Integer
   
+    def seconds
+      return self.to_i
+    end
+    
+    alias_method :second, :seconds
+    
     def mins
       return self.to_i * 60
     end
@@ -25,7 +31,7 @@ class Integer
     alias_method :week, :weeks
     
     def months
-      return self.weeks * 30
+      return self.days * 30
     end
     
     alias_method :month, :months

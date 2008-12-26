@@ -80,7 +80,7 @@ describe 'UBSafe::Commands' do
     config = UBSafe::Config.config
     config.load(args)
     backup_options = config.full_options(backup_name)
-
+  
     # General test setup - we can cheat a little, since everything is local - no ssh commands needed
     backup_options[:backups_to_retain] = 5
     backup_directory = File.join(backup_options[:base_backup_directory],backup_name)
@@ -89,42 +89,139 @@ describe 'UBSafe::Commands' do
     backup_cmd = UBSafe::Commands::Backup.new(args)
     
     # Test 1 - no entries
-    FileUtils.rm_f(File.join(backup_directory,'*'))
+    cmd = "rm -rf #{backup_directory}/*"
+    `#{cmd}`
+    test_data_directory = File.join(base_test_data_directory,'empty')
+    backup_cmd.rotate_destination_files_unconditionally(backup_options,backup_name)
+    test_target_files_count = Dir.glob(File.join(test_data_directory,'*')).size
+    backup_files_count = Dir.glob(File.join(backup_directory,'*')).size
+    backup_files_count.should == test_target_files_count
+  
+    # Test 2 - 1 entry
+    cmd = "rm -rf #{backup_directory}/*"
+    `#{cmd}`
+    test_data_directory = File.join(base_test_data_directory,'one_file')
+    `cp #{File.join(test_data_directory,'*')} #{backup_directory}`
+    backup_cmd.rotate_destination_files_unconditionally(backup_options,backup_name)
+    test_target_files_count = Dir.glob(File.join(test_data_directory,'*')).size
+    backup_files_count = Dir.glob(File.join(backup_directory,'*')).size
+    backup_files_count.should == test_target_files_count
+  
+    # Test 3 - 2 entries
+    cmd = "rm -rf #{backup_directory}/*"
+    `#{cmd}`
+    test_data_directory = File.join(base_test_data_directory,'two_files')
+    `cp #{File.join(test_data_directory,'*')} #{backup_directory}`
+    backup_cmd.rotate_destination_files_unconditionally(backup_options,backup_name)
+    test_target_files_count = Dir.glob(File.join(test_data_directory,'*')).size
+    backup_files_count = Dir.glob(File.join(backup_directory,'*')).size
+    backup_files_count.should == test_target_files_count
+  
+    # Test 4 - 5 entries
+    cmd = "rm -rf #{backup_directory}/*"
+    `#{cmd}`
+    test_data_directory = File.join(base_test_data_directory,'five_files')
+    `cp #{File.join(test_data_directory,'*')} #{backup_directory}`
+    backup_cmd.rotate_destination_files_unconditionally(backup_options,backup_name)
+    test_target_files_count = Dir.glob(File.join(test_data_directory,'*')).size
+    backup_files_count = Dir.glob(File.join(backup_directory,'*')).size
+    backup_files_count.should == test_target_files_count - 1
+  
+  end
+
+  it "should roll files when they age appropriately" do
+    config_file_name = './spec/test_data/ubsafe_config.yml'
+    backup_name = 'git_repos'
+    args = ['-c',config_file_name, '-n', backup_name]
+    config = UBSafe::Config.config
+    config.load(args)
+    backup_options = config.full_options(backup_name)
+    
+    # General test setup - we can cheat a little, since everything is local - no ssh commands needed
+    backup_options[:backups_to_retain] = 5
+    backup_directory = File.join(backup_options[:base_backup_directory],backup_name)
+    base_test_data_directory = File.expand_path('./spec/test_data/targets')
+    FileUtils.mkdir_p(backup_directory)
+    backup_cmd = UBSafe::Commands::Backup.new(args)
+
+    # Test 1 - no entries
+    cmd = "rm -rf #{backup_directory}/*"
+    `#{cmd}`
     test_data_directory = File.join(base_test_data_directory,'empty')
     backup_cmd.rotate_destination_files(backup_options,backup_name)
     test_target_files_count = Dir.glob(File.join(test_data_directory,'*')).size
     backup_files_count = Dir.glob(File.join(backup_directory,'*')).size
     backup_files_count.should == test_target_files_count
-
-    # Test 2 - 1 entry
-    FileUtils.rm_f(File.join(backup_directory,'*'))
+    
+    # Test 2 - 1 entry - specified age
+    cmd = "rm -rf #{backup_directory}/*"
+    `#{cmd}`
     test_data_directory = File.join(base_test_data_directory,'one_file')
     `cp #{File.join(test_data_directory,'*')} #{backup_directory}`
+    test_file = File.join(backup_directory,'git_repos.tar.gz.0')
+    now = Time.now.utc
+    File.utime(now,now,test_file)
+    backup_options[:backup_frequency] = 1.second
+    sleep(2.seconds)
     backup_cmd.rotate_destination_files(backup_options,backup_name)
     test_target_files_count = Dir.glob(File.join(test_data_directory,'*')).size
     backup_files_count = Dir.glob(File.join(backup_directory,'*')).size
     backup_files_count.should == test_target_files_count
-
-    # Test 3 - 2 entries
-    FileUtils.rm_f(File.join(backup_directory,'*'))
-    test_data_directory = File.join(base_test_data_directory,'two_files')
+    File.exists?(test_file).should be_false # It should have rolled
+    
+    # Test 2 - 1 entry - daily
+    cmd = "rm -rf #{backup_directory}/*"
+    `#{cmd}`
+    test_data_directory = File.join(base_test_data_directory,'one_file')
     `cp #{File.join(test_data_directory,'*')} #{backup_directory}`
+    test_file = File.join(backup_directory,'git_repos.tar.gz.0')
+    now = Time.now.utc
+    yesterday = now - 1.day
+    File.utime(yesterday,yesterday,test_file)
+    backup_options[:backup_frequency] = :daily
+    sleep(1.seconds)
     backup_cmd.rotate_destination_files(backup_options,backup_name)
     test_target_files_count = Dir.glob(File.join(test_data_directory,'*')).size
     backup_files_count = Dir.glob(File.join(backup_directory,'*')).size
     backup_files_count.should == test_target_files_count
+    File.exists?(test_file).should be_false # It should have rolled
 
-    # Test 4 - 5 entries
-    FileUtils.rm_f(File.join(backup_directory,'*'))
-    test_data_directory = File.join(base_test_data_directory,'five_files')
+    # Test 3 - 1 entry - weekly
+    cmd = "rm -rf #{backup_directory}/*"
+    `#{cmd}`
+    test_data_directory = File.join(base_test_data_directory,'one_file')
     `cp #{File.join(test_data_directory,'*')} #{backup_directory}`
+    test_file = File.join(backup_directory,'git_repos.tar.gz.0')
+    now = Time.now.utc
+    yesterday = now - 1.week
+    File.utime(yesterday,yesterday,test_file)
+    backup_options[:backup_frequency] = :weekly
+    sleep(1.seconds)
     backup_cmd.rotate_destination_files(backup_options,backup_name)
     test_target_files_count = Dir.glob(File.join(test_data_directory,'*')).size
     backup_files_count = Dir.glob(File.join(backup_directory,'*')).size
-    backup_files_count.should == test_target_files_count - 1
+    backup_files_count.should == test_target_files_count
+    File.exists?(test_file).should be_false # It should have rolled
+
+    # Test 4 - 1 entry - monthly
+    cmd = "rm -rf #{backup_directory}/*"
+    `#{cmd}`
+    test_data_directory = File.join(base_test_data_directory,'one_file')
+    `cp #{File.join(test_data_directory,'*')} #{backup_directory}`
+    test_file = File.join(backup_directory,'git_repos.tar.gz.0')
+    now = Time.now.utc
+    yesterday = now - 1.month
+    File.utime(yesterday,yesterday,test_file)
+    backup_options[:backup_frequency] = :monthly
+    sleep(1.seconds)
+    backup_cmd.rotate_destination_files(backup_options,backup_name)
+    test_target_files_count = Dir.glob(File.join(test_data_directory,'*')).size
+    backup_files_count = Dir.glob(File.join(backup_directory,'*')).size
+    backup_files_count.should == test_target_files_count
+    File.exists?(test_file).should be_false # It should have rolled
 
   end
-
+  
   after :each do
     FileUtils.rm_rf('./spec/tmp')
   end

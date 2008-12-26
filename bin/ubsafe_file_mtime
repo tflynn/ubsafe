@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+file_name = ARGV[0]
+
+if File.exists?(file_name)
+  original_file_mtime_utc = File.mtime(file_name).getutc
+  puts original_file_mtime_utc.strftime('%Y-%m-%d %H:%M:%S')
+else
+  puts ''
+end

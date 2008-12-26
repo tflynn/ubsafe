@@ -31,19 +31,19 @@
 :backup_types:
   :git:
     :backup_style: :tar_gz
-    :backup_frequency: :daily
+    :backup_frequency: <%= 1.second %>
     :backup_file_name_template: '%f.tar.gz.%n'
-    :backups_to_retain: 30
+    :backups_to_retain: 3
 
 :backup_hosts:
   :test:
     :hostname: '10.1.10.52'
     :user_name: 'tflynn'
-    :password: 'b3e1r4t1'
+    :password: <%= `cat .password` %>
     :base_backup_directory: '/Users/tflynn/Everything/Activities/git/ubsafe/spec/tmp/targets'
   :test1:
     :hostname: '192.168.1.100'
     :user_name: 'tracy'
-    :password: 'b3e1r4t1'
+    :password: <%= `cat .password` %>
     :base_backup_directory: '/Users/tracy/Everything/Activities/git/ubsafe/spec/tmp/targets'    
     

@@ -2,3 +2,4 @@ spec/tmp
 spec/tmp/*
 ubsafe.kpf
 spec/logs
+.password

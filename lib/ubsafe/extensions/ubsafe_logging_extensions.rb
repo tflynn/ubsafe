@@ -10,6 +10,14 @@ module Logging
         @app_name = configuration[:log_identifier]
       end
       
+      # Get the (cached) hostname for this machine
+      def hostname
+        unless defined?(@@hostname)
+          @@hostname = `hostname`.chomp.strip.downcase
+        end
+        return @@hostname
+      end
+      
       # call-seq:
       #    format( event )
       #
@@ -125,3 +133,4 @@ module Logging::Appenders
 
   end
 end
+

@@ -4,4 +4,6 @@ require 'spec'
 
 $: << File.join(File.dirname(__FILE__), "..", "lib")
 
+ENV['UBSAFE_ENV'] = 'test'
+
 require File.expand_path(File.join(File.dirname(__FILE__), "..", "lib", "ubsafe"))

@@ -10,27 +10,41 @@ module UBSafe
     attr_reader :options
     
     class << self
-
+    
       ##
       # Get configuration settings
       #
       # @return [UBSafe::Config] Singleton instance of UBSafe::Config
       #
       def config
-        @@config_instance = UBSafe::Config.new unless defined?(@@config_instance)
+        if (not defined?(@@config_instance)) or @@config_instance.nil?
+          @@config_instance = UBSafe::Config.new
+        end
         return @@config_instance
       end
       
-      ## Get logger
+      ##
+      # Reset the configuration settings
       #
-      # @return [Logging::Logger] Common logger instance
-      #
-      def log
-        return defined?(@@logger) ? @@logger : nil
+      def reset
+        @@config_instance = nil
       end
       
     end
+    
+    private 
 
+    ##
+    # Create a new Config instance
+    #
+    # @return [UBSafe::Config] Instance of UBSafe::Config
+    #
+    def initialize
+      @options = {}
+    end
+
+    public
+    
     ##
     # Load a Config instance
     #
@@ -38,15 +52,15 @@ module UBSafe
     #
     def load(args = nil)
       @options[:config_file] = ENV['UBSAFE_CONFIG_FILE'] unless ENV['UBSAFE_CONFIG_FILE'].nil?
-      # puts "UBConfig.load After env check @options #{@options.inspect}"
+      #puts "UBConfig.load After env check @options #{@options.inspect}"
       @options.merge!(parse_args(args))
-      # puts "UBConfig.load After merge @options #{@options.inspect}"
+      #puts "UBConfig.load After merge @options #{@options.inspect}"
       if @options[:config_file]
         @options.merge!(load_config_file(@options[:config_file]))
       end
       configure_logging
     end
-
+      
     ## 
     # Get the full set of configuration options for the specified backup
     #
@@ -58,8 +72,13 @@ module UBSafe
       # Get backup defaults
       backup_options.merge!(@options[:backup_defaults].dup_contents_1_level)
       # Get the specific backup definition
+      unless @options[:backups].has_key?(backup_name.to_sym)
+        @logger.fatal("The backup name specified '#{backup_name}' has no configuration defined in #{@options[:config_file]}") 
+        raise Exception.new("Non-existent backup specified '#{backup_name}'")
+      end
       backup_options.merge!(@options[:backups][backup_name.to_sym].dup_contents_1_level)
       return nil unless backup_options[:enabled]
+      backup_options[:backup_name] = backup_name.to_s unless backup_options[:backup_name]
       # Expand the backup host reference
       selected_host = backup_options[:backup_host]
       backup_options.merge!(@options[:backup_hosts][selected_host].dup_contents_1_level)
@@ -68,18 +87,18 @@ module UBSafe
       backup_options.merge!(@options[:backup_types][selected_backup_type].dup_contents_1_level)
       return backup_options
     end
+      
+    ## Get logger
+    #
+    # @return [Logging::Logger] Common logger instance
+    #
+    def log
+      return defined?(@logger) ? @logger : nil
+    end
+    
     
     private
     
-    ##
-    # Create a new Config instance
-    #
-    # @return [UBSafe::Config] Instance of UBSafe::Config
-    #
-    def initialize
-      @options = {}
-    end
-
     ##
     # Parse command-line arguments
     #
@@ -110,10 +129,9 @@ module UBSafe
         template = ERB.new(File.open(config_file_name).read)
         contents = YAML.load(template.result)
       rescue Exception => ex
-        puts "SEVERE - Unable to load configuration file '#{config_file_name}'"
-        # puts ex.to_s
-        # puts ex.backtrace.join("\n")
-        contents = nil
+        puts "FATAL - Unable to find or load configuration file '#{config_file_name}'"
+        raise ex
+        #exit 1
       end
       return contents
     end
@@ -123,12 +141,13 @@ module UBSafe
     #
     def configure_logging
       @logger_configuration = @options[:logging]
-      @@logger = Logging::Logger[@logger_configuration[:log_identifier]]
+      @logger = Logging::Logger[@logger_configuration[:log_identifier]]
       logger_layout = Logging::Layouts::UBSafeLoggerLayout.new(@logger_configuration)
       FileUtils.mkdir_p(File.expand_path(@logger_configuration[:log_directory]))
-      qualified_logger_file_name = File.expand_path(File.join(@logger_configuration[:log_directory],@logger_configuration[:log_filename_pattern]))
-      @@logger.add_appenders(
-          #Logging::Appenders::File.new(qualified_logger_file_name, :layout => logger_layout)
+      env = ENV['UBSAFE_ENV'] ? "_#{ENV['UBSAFE_ENV'].downcase}" : '' 
+      log_file_name = @logger_configuration[:log_filename_pattern].gsub(/\%env\%/,env)
+      qualified_logger_file_name = File.expand_path(File.join(@logger_configuration[:log_directory],log_file_name))
+      @logger.add_appenders(
           Logging::Appenders::RollingFile.new(@logger_configuration[:log_identifier],
             { :filename => qualified_logger_file_name, 
               :age => @logger_configuration[:log_rolling_frequency],
@@ -139,18 +158,9 @@ module UBSafe
             
           )
       )
-      @@logger.level = @logger_configuration[:log_level]
+      @logger.level = @logger_configuration[:log_level]
     end
-    
-    # Get the (cached) hostname for this machine
-    def hostname
-      unless defined?(@@hostname)
-        @@hostname = `hostname`.chomp.strip.downcase
-      end
-      return @@hostname
-    end
-    
-    
+      
   end
   
 end

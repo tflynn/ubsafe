@@ -11,4 +11,4 @@ else
   require 'ubsafe'  
 end
 
-UBSafe::Commands::backup(ARGV)
+UBSafe::Commands::Backup.new(ARGV).backup

@@ -3,15 +3,16 @@
 
 :logging:
   :log_identifier: 'ubsafe'
-  :log_directory: './spec/tmp/logs'
-  :log_filename_pattern: 'ubsafe.log'
+  :log_directory: './spec/logs'
+  :log_filename_pattern: 'ubsafe%env%.log' # Specify ENV['UBSAFE_ENV'] to set environment
   :log_level: :debug
   :log_rolling_frequency: 'daily'
   :logs_to_retain: 30
 
 :backups:
-  :git1:
+  :git_repos:
     :enabled: true
+    :backup_name: 'git_repos'   # must be single string, no spaces
     :backup_type: :git
     :source_tree: './spec/test_data/sources/git'
     :backup_host: :test1
@@ -22,15 +23,17 @@
   #   
   # :wiki:
 :backup_defaults:
-  :number_format: '%3d'
-  :time_zone_type: 'UTC'  #Only time zone currently supported
+  :number_format: '%d'
+  :time_zone: 'UTC'  # UTC is the only time zone currently supported
+  :timestamp_format: '%Y%m%d%H%M' # strftime format
+  :date_format: '%Y%m%d' # strftime format
 
 :backup_types:
   :git:
     :backup_style: :tar_gz
     :backup_frequency: <%= 1.day %>
-    :backup_file_name_template: '%f.%n.tar.gz'
-    :backup_retention: 30
+    :backup_file_name_template: '%f.tar.gz.%n'
+    :backups_to_retain: 30
 
 :backup_hosts:
   :test:

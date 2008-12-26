@@ -1,6 +1,6 @@
-require 'fileutils'
-
 require File.expand_path(File.join(File.dirname(__FILE__), "..", "spec_helper"))
+
+require 'fileutils'
 
 describe 'UBSafe::Config' do
   
@@ -49,7 +49,18 @@ describe 'UBSafe::Config' do
     args = ['-c',config_file_name]
     config = UBSafe::Config.config
     config.load(args)
-    expanded_options = config.full_options('git1')
+    
+    exception_found = false
+    begin
+      expanded_options = config.full_options('git1')
+    rescue Exception => ex
+      exception_found = true
+    end
+    exception_found.should be_true
+    
+    config = UBSafe::Config.config
+    config.load(args)
+    expanded_options = config.full_options('git_repos')
     # Check random options to make sure expansion works
     expanded_options.has_key?(:number_format).should be_true
     expanded_options.has_key?(:backup_style).should be_true

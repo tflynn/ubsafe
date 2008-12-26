@@ -55,11 +55,13 @@ describe 'UBSafe::Commands' do
     backup_name = 'git_repos'
     args = ['-c',config_file_name, '-n', backup_name]
     backup_cmd = UBSafe::Commands::Backup.new(args)
-    backup_cmd.backup
     config = UBSafe::Config.config
     # Default pattern from config - '%f.tar.gz.%n'
     backup_options = config.full_options(backup_name)
     backup_file_name = backup_cmd.get_backup_file_name
+  
+    backup_cmd.create_source_backup(backup_options,backup_name)
+  
     source_tree = File.expand_path(backup_options[:source_tree])
     tmp_dir = File.expand_path(backup_options[:temporary_directory])
     full_backup_file_name = File.expand_path(File.join(tmp_dir,backup_file_name))
@@ -128,7 +130,7 @@ describe 'UBSafe::Commands' do
     backup_files_count.should == test_target_files_count - 1
   
   end
-
+  
   it "should roll files when they age appropriately" do
     config_file_name = './spec/test_data/ubsafe_config.yml'
     backup_name = 'git_repos'
@@ -143,7 +145,7 @@ describe 'UBSafe::Commands' do
     base_test_data_directory = File.expand_path('./spec/test_data/targets')
     FileUtils.mkdir_p(backup_directory)
     backup_cmd = UBSafe::Commands::Backup.new(args)
-
+  
     # Test 1 - no entries
     cmd = "rm -rf #{backup_directory}/*"
     `#{cmd}`
@@ -179,13 +181,13 @@ describe 'UBSafe::Commands' do
     yesterday = now - 1.day
     File.utime(yesterday,yesterday,test_file)
     backup_options[:backup_frequency] = :daily
-    sleep(1.seconds)
+    sleep(1.second)
     backup_cmd.rotate_destination_files(backup_options,backup_name)
     test_target_files_count = Dir.glob(File.join(test_data_directory,'*')).size
     backup_files_count = Dir.glob(File.join(backup_directory,'*')).size
     backup_files_count.should == test_target_files_count
     File.exists?(test_file).should be_false # It should have rolled
-
+  
     # Test 3 - 1 entry - weekly
     cmd = "rm -rf #{backup_directory}/*"
     `#{cmd}`
@@ -196,13 +198,13 @@ describe 'UBSafe::Commands' do
     yesterday = now - 1.week
     File.utime(yesterday,yesterday,test_file)
     backup_options[:backup_frequency] = :weekly
-    sleep(1.seconds)
+    sleep(1.second)
     backup_cmd.rotate_destination_files(backup_options,backup_name)
     test_target_files_count = Dir.glob(File.join(test_data_directory,'*')).size
     backup_files_count = Dir.glob(File.join(backup_directory,'*')).size
     backup_files_count.should == test_target_files_count
     File.exists?(test_file).should be_false # It should have rolled
-
+  
     # Test 4 - 1 entry - monthly
     cmd = "rm -rf #{backup_directory}/*"
     `#{cmd}`
@@ -213,13 +215,58 @@ describe 'UBSafe::Commands' do
     yesterday = now - 1.month
     File.utime(yesterday,yesterday,test_file)
     backup_options[:backup_frequency] = :monthly
-    sleep(1.seconds)
+    sleep(1.second)
     backup_cmd.rotate_destination_files(backup_options,backup_name)
     test_target_files_count = Dir.glob(File.join(test_data_directory,'*')).size
     backup_files_count = Dir.glob(File.join(backup_directory,'*')).size
     backup_files_count.should == test_target_files_count
     File.exists?(test_file).should be_false # It should have rolled
+  
+  end
+  
+  it 'should copy a backup file to the specified location' do
+    
+    config_file_name = './spec/test_data/ubsafe_config.yml'
+    backup_name = 'git_repos'
+    args = ['-c',config_file_name, '-n', backup_name]
+    backup_cmd = UBSafe::Commands::Backup.new(args)
+    config = UBSafe::Config.config
+  
+    backup_options = config.full_options(backup_name)
+    backup_file_name = backup_cmd.get_backup_file_name
+   
+    # For testing, we can cheat since we're on the same file system
+    remote_directory = File.expand_path(File.join(backup_options[:base_backup_directory],backup_name))
+    FileUtils.mkdir_p(remote_directory)
+  
+    backup_cmd.create_source_backup(backup_options,backup_name)
+    cmd_status = backup_cmd.copy_backup(backup_options,backup_name)
+    cmd_status.should == :success
+  
+    remote_file = File.join(remote_directory,backup_file_name)
+    File.exists?(remote_file).should be_true
+    
+  end
+  
+  it "should perform a full backup and clean up after itself" do
+    config_file_name = './spec/test_data/ubsafe_config.yml'
+    backup_name = 'git_repos'
+    args = ['-c',config_file_name, '-n', backup_name]
+    backup_cmd = UBSafe::Commands::Backup.new(args)
+    config = UBSafe::Config.config
+    backup_options = config.full_options(backup_name)
+  
+    # For testing, we can cheat since we're on the same file system
+    remote_directory = File.expand_path(File.join(backup_options[:base_backup_directory],backup_name))
+    FileUtils.mkdir_p(remote_directory)
 
+    cmd_status = backup_cmd.backup
+    cmd_status.should == 0
+    
+    tmp_dir = File.expand_path(backup_options[:temporary_directory])
+    backup_file_name = File.join(tmp_dir,backup_cmd.get_backup_file_name(backup_options))
+    File.exists?(backup_file_name).should be_false
+    
   end
   
   after :each do

@@ -36,8 +36,12 @@ module UBSafe
           ]
         backup_steps.each do |backup_step|
           status = self.send(backup_step)
-          return 1 if status == :failure
+          if status == :failure
+            @log.error("Backup #{@backup_name} backup step #{backup_step.to_s} failed.")
+            return 1
+          end
         end
+        @log.info("Backup  #{@backup_name} succeeded")
         return 0
       end
       
@@ -251,10 +255,19 @@ module UBSafe
       ##
       # Copy backup 
       #
+      # @param [Hash] backup_options
+      # @param [String] backup_name
       # @return [Symbol] :success or :failure
       #
-      def copy_backup
-        
+      def copy_backup(backup_options = nil,backup_name = nil)
+        backup_options ||= @backup_options
+        backup_name ||= @backup_name
+        # Fully qualify directories
+        tmp_dir = File.expand_path(backup_options[:temporary_directory])
+        backup_file_name = File.join(tmp_dir,get_backup_file_name(backup_options))
+        remote_directory_name = File.join(backup_options[:base_backup_directory],backup_name)
+        cmd_status, cmd_output = scp_cmd(backup_file_name,remote_directory_name,backup_options,backup_name)
+        return :failure unless cmd_status == :success
         return :success
       end
 
@@ -279,10 +292,19 @@ module UBSafe
       ##
       # Clean Source - remove (temporary) backup files from source
       #
+      # @param [Hash] backup_options
+      # @param [String] backup_name
       # @return [Symbol] :success or :failure
       #
       def clean_source
-        return :success
+        backup_options ||= @backup_options
+        backup_name ||= @backup_name
+        # Fully qualify directories
+        tmp_dir = File.expand_path(backup_options[:temporary_directory])
+        backup_file_name = File.join(tmp_dir,get_backup_file_name(backup_options))
+        cmd_output = `rm -f #{backup_file_name}`
+        cmd_status = $?
+        return cmd_status == 0 ? :success : :failure
       end
 
 
@@ -418,6 +440,45 @@ module UBSafe
         cmd_status = cmd_status == 0 ? :success : :failure
         return [cmd_status,cmd_output_cleaned]
       end
+
+      ##
+      # Issue an scp command
+      #
+      # @param [String] source_file Fully qualified name of file to send
+      # @param [String] destination_dir Destination directory on remote host
+      # @param [Hash] backup_options
+      # @param [String] backup_name
+      # @return [Array] [command status, command output]
+      #
+      def scp_cmd(source_file,destination_dir,backup_options = nil,backup_name = nil)
+        backup_options ||= @backup_options
+        backup_name ||= @backup_name
+        ssh_user = backup_options[:user_name]
+        ssh_host = backup_options[:hostname]
+        ssh_password = backup_options[:password]
+        if ssh_password
+          # Need to use expect for the password if certs don't work
+          cmd_exe = File.expand_path(File.join(::UBSAFE_ROOT, 'bin','ubsafe_scp_cmd.expect'))
+          full_cmd = "#{cmd_exe} #{ssh_user}@#{ssh_host} \"#{ssh_password}\" #{source_file} #{destination_dir}"
+          masked_full_cmd = "#{cmd_exe} #{ssh_user}@#{ssh_host} [PASSWORD] #{source_file} #{destination_dir}"
+        else
+          # Certs assumed if no password
+          full_cmd = "scp #{ssh_user}@#{ssh_host} #{source_file} #{destination_dir}"
+          masked_full_cmd = full_cmd
+        end
+        #puts "About to issue \"#{full_cmd}\""
+        cmd_output = `#{full_cmd}`
+        cmd_status = $?
+        @log.debug("Executed scp status #{cmd_status} command \"#{masked_full_cmd}\"")
+        cmd_output_lines = cmd_output.split("\n").reject {|line| line =~ /spawn/i or line =~ /password/i }
+        cmd_output_cleaned = []
+        cmd_output_lines.each do |cmd_output_line|
+          cmd_output_cleaned << cmd_output_line.strip.chomp
+        end
+        cmd_status = cmd_status == 0 ? :success : :failure
+        return [cmd_status,cmd_output_cleaned]
+      end
+      
     end
     
   end

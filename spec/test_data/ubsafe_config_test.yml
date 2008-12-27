@@ -17,9 +17,15 @@
     :source_tree: './spec/test_data/sources/git'
     :backup_host: :test1
     :temporary_directory: './spec/tmp'
+  :svn_repos:
+    :enabled: true
+    :backup_name: 'svn_repos'   # must be single string, no spaces
+    :backup_type: :svn
+    :source_tree: '/Users/tracy/Everything/Activities/ejabberd'
+    :backup_host: :test1
+    :temporary_directory: './spec/tmp'
+    
   # :mysql:
-  #   
-  # :svn:
   #   
   # :wiki:
 :backup_defaults:
@@ -35,6 +41,12 @@
     :backup_file_name_template: '%f.tar.gz.%n'
     :backups_to_retain: 3
     :backup_class: :default
+  :svn:
+    :backup_style: :tar_gz
+    :backup_frequency: <%= 1.second %>
+    :backup_file_name_template: '%f.tar.gz.%n'
+    :backups_to_retain: 3
+    :backup_class: 'UBSafe::Commands::SVNBackup'
 
 :backup_hosts:
   :test:

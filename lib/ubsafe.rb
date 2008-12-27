@@ -10,4 +10,4 @@ UBSAFE_ROOT = File.expand_path(File.join(File.dirname(__FILE__),'..')) unless de
 
 require File.expand_path(File.join(File.dirname(__FILE__), 'ubsafe','extensions', 'ubsafe_extensions'))
 require File.join_from_here('ubsafe','ubsafe_config')
-require File.join_from_here('ubsafe','ubsafe_commands')
+require File.join_from_here('ubsafe','ubsafe_commands','ubsafe_commands')

@@ -7,6 +7,30 @@ module UBSafe
     
     class Backup
       
+      class << self
+        
+        ##
+        # Get backup-specific backup instance
+        #
+        # @param [Array] args Command-line arguments
+        #
+        def instance(args)
+          @config = UBSafe::Config.config
+          @config.load(args)
+          @backup_name = @config.options[:backup_name]
+          @backup_options = @config.full_options(@backup_name)
+          backup_class = @backup_options[:backup_class]
+          backup_instance = nil
+          if backup_class == :default
+            backup_instance = UBSafe::Commands::Backup.new(args)
+          else
+            eval("backup_instance = #{backup_class.to_s}.new(args)")
+          end
+          return backup_instance
+        end
+        
+      end
+      
       ##
       # Create a new backup instance
       #

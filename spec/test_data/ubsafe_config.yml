@@ -34,6 +34,7 @@
     :backup_frequency: <%= 5.seconds %>
     :backup_file_name_template: '%f.tar.gz.%n'
     :backups_to_retain: 5
+    :backup_class: :default
 
 :backup_hosts:
   :test:

@@ -33,7 +33,7 @@
     :backup_style: :tar_gz
     :backup_frequency: <%= 5.seconds %>
     :backup_file_name_template: '%f.tar.gz.%n'
-    :backups_to_retain: 3
+    :backups_to_retain: 5
 
 :backup_hosts:
   :test:
@@ -48,6 +48,7 @@
     :base_backup_directory: '/Users/tracy/Temp/dev/ubsafe/backups'    
 
 :backup_email:
+  :enabled: true
   :smtp_host: 'mail.helium.com'
   :smtp_port: 25
   :mail_from: 'devbackups@helium.com'

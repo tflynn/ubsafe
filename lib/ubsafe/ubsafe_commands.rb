@@ -325,6 +325,7 @@ module UBSafe
       #
       def email_notify(status = :failure,processing_step = nil)
         mail_config = @config.options[:backup_email]
+        return :success unless mail_config[:enabled]
         backup_options = @backup_options
         backup_name = @backup_name
         hostname = `hostname`.chomp.strip

@@ -48,6 +48,7 @@
     :base_backup_directory: '/Users/tracy/Everything/Activities/git/ubsafe/spec/tmp/targets'    
 
 :backup_email:
+  :enabled: true
   :smtp_host: 'mail.helium.com'
   :smtp_port: 25
   :mail_from: 'devbackups@helium.com'

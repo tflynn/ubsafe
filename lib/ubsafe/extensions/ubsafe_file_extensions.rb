@@ -10,7 +10,7 @@ class File
     # Join a list of paths as strings and/or arrays of strings
     #
     # @param args [Array] (Nested) list of paths to join
-    # @returns
+    # @return Joined list
     # Join now works like it should! It calls .to_s on each of the args
     # pass in. It handles nested Arrays, etc...
     #

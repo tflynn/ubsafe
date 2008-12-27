@@ -33,7 +33,7 @@
     :temporary_directory: '/Users/tracy/Temp/dev/ubsafe/tmp'
     :mysql_host: 'holly'
     :mysql_username: 'tflynn'
-    :mysql_password: <%= `cat .mysqlpassword` %>
+    :mysql_password: <%= `cat .ubsafe_mysqlpassword` %>
     :mysql_database: 'mysql'
   #   
   # :wiki:
@@ -67,12 +67,12 @@
   :test:
     :hostname: '10.1.10.52'
     :user_name: 'tflynn'
-    :password: <%= `cat .password` %>
+    :password: <%= `cat .ubsafe_password` %>
     :base_backup_directory: '/Users/tflynn/Everything/Activities/git/ubsafe/spec/tmp/targets'
   :test1:
     :hostname: '192.168.1.100'
     :user_name: 'tracy'
-    :password: <%= `cat .password` %>
+    :password: <%= `cat .ubsafe_password` %>
     :base_backup_directory: '/Users/tracy/Temp/dev/ubsafe/backups'    
 
 :backup_email:

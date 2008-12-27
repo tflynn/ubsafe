@@ -12,3 +12,4 @@ else
 end
 
 UBSafe::Commands::Backup.instance(ARGV).backup
+

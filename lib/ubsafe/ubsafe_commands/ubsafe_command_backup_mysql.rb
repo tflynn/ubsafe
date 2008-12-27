@@ -4,7 +4,7 @@ module UBSafe
 
   module Commands
     
-    class SVNBackup < UBSafe::Commands::Backup
+    class MySqlBackup < UBSafe::Commands::Backup
    
       ##
       # Hook to allow customization before creating source backup
@@ -12,21 +12,21 @@ module UBSafe
       # @return [Symbol] :success or :failure
       #
       def before_source_backup
-        source_tree = File.expand_path(@backup_options[:source_tree])
         tmp_dir = File.expand_path(@backup_options[:temporary_directory])
-        svn_tmp_dir = File.join(tmp_dir,'svn')
-        FileUtils.mkdir_p(svn_tmp_dir)
-        cmd = "svnadmin hotcopy #{source_tree} #{svn_tmp_dir}"
+        mysql_tmp_dir = File.join(tmp_dir,'mysql')
+        FileUtils.mkdir_p(mysql_tmp_dir)
+        cmd = " mysqldump -u#{@backup_options[:mysql_username]} -p#{@backup_options[:mysql_password]} -h#{@backup_options[:mysql_host]} #{@backup_options[:mysql_database]} >#{mysql_tmp_dir}/#{@backup_options[:mysql_database]}.sql"
+        @log.info("Backup #{@backup_name} \"mysqldump -u#{@backup_options[:mysql_username]} -p[PASSWORD] -h#{@backup_options[:mysql_host]} #{@backup_options[:mysql_database]} >#{mysql_tmp_dir}/#{@backup_options[:mysql_database]}.sql\"")
         cmd_output = `#{cmd}`
         cmd_status = $?
         cmd_status = cmd_status == 0 ? :success : :failure
         if cmd_status == :failure
           # cleanup
-          cmd_output = `rm -rf #{svn_tmp_dir}`
-          @log.error("Backup #{@backup_name} before_source_backup failed during hotcopy. Output #{cmd_output}")
+          cmd_output = `rm -rf #{mysql_tmp_dir}`
+          @log.error("Backup #{@backup_name} before_source_backup failed during mysqldump. Output #{cmd_output}")
         end
-        # Point source to hotcopy so rest of the world works
-        @backup_options[:source_tree] = svn_tmp_dir
+        # Point source to directory with dump file in it so rest of the world works
+        @backup_options[:source_tree] =  mysql_tmp_dir
         return cmd_status
       end
       
@@ -37,8 +37,8 @@ module UBSafe
       #
       def after_clean_source
         tmp_dir = File.expand_path(@backup_options[:temporary_directory])
-        svn_tmp_dir = File.join(tmp_dir,'svn')
-        cmd_output = `rm -rf #{svn_tmp_dir}`
+        mysql_tmp_dir = File.join(tmp_dir,'mysql')
+        cmd_output = `rm -rf #{mysql_tmp_dir}`
         cmd_status = $?
         cmd_status == 0 ? :success : :failure
         if cmd_status == :failure
@@ -46,6 +46,7 @@ module UBSafe
         end
         return cmd_status
       end
+      
       
     end
     

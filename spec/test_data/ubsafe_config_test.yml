@@ -21,11 +21,21 @@
     :enabled: true
     :backup_name: 'svn_repos'   # must be single string, no spaces
     :backup_type: :svn
-    :source_tree: '/Users/tracy/Everything/Activities/ejabberd'
+    :source_tree: '/Users/tracy/Temp/dev/svn_repo'
     :backup_host: :test1
     :temporary_directory: './spec/tmp'
-    
-  # :mysql:
+  :mysql_db:
+    :enabled: true
+    :backup_name: 'mysql_db'   # must be single string, no spaces
+    :backup_type: :mysql
+    :source_tree: '/Users/tracy/Temp/dev/mysql'
+    :backup_host: :test1
+    :temporary_directory: './spec/tmp'
+    :mysql_host: 'holly'
+    :mysql_username: 'tflynn'
+    :mysql_password: <%= `cat .mysqlpassword` %>
+    :mysql_database: 'mysql'
+
   #   
   # :wiki:
 :backup_defaults:

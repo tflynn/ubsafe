@@ -46,3 +46,11 @@
     :user_name: 'tracy'
     :password: 'b3e1r4t1'
     :base_backup_directory: '/Users/tracy/Everything/Activities/git/ubsafe/spec/tmp/targets'    
+
+:backup_email:
+  :smtp_host: 'mail.helium.com'
+  :smtp_port: 25
+  :mail_from: 'devbackups@helium.com'
+  :mail_to: 
+    - 'tflynn@helium.com'
+  :mail_subject_prefix: '[ubsafe] '

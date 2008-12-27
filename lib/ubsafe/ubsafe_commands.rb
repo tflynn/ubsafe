@@ -1,4 +1,5 @@
 require 'parsedate'
+require 'net/smtp'
 
 module UBSafe
 
@@ -38,10 +39,12 @@ module UBSafe
           status = self.send(backup_step)
           if status == :failure
             @log.error("Backup #{@backup_name} backup step #{backup_step.to_s} failed.")
+            email_notify(:failure,backup_step)
             return 1
           end
         end
         @log.info("Backup  #{@backup_name} succeeded")
+        email_notify(:success,nil)
         return 0
       end
       
@@ -302,7 +305,7 @@ module UBSafe
       # @param [String] backup_name
       # @return [Symbol] :success or :failure
       #
-      def clean_source
+      def clean_source(backup_options = nil,backup_name = nil)
         backup_options ||= @backup_options
         backup_name ||= @backup_name
         # Fully qualify directories
@@ -313,7 +316,54 @@ module UBSafe
         return cmd_status == 0 ? :success : :failure
       end
 
+      ##
+      # Notify via email
+      #
+      # @param [Symbol] status
+      # @param [Symbol] processing_step
+      # @return [Symbol] :success or :failure
+      #
+      def email_notify(status = :failure,processing_step = nil)
+        mail_config = @config.options[:backup_email]
+        backup_options = @backup_options
+        backup_name = @backup_name
+        hostname = `hostname`.chomp.strip
+        log_directory = File.expand_path(@config.options[:logging][:log_directory])
+        if status == :success
+          subject = "#{mail_config[:mail_subject_prefix]} backup '#{backup_name}' OK"
+          body = "Backup '#{backup_name}' succeeded"
+          body << "\n\nLogs are available at #{hostname}:#{log_directory}"
+        else
+          processing_step = processing_step ? processing_step.to_s : 'unknown'
+          subject = "#{mail_config[:mail_subject_prefix]} backup '#{backup_name}' failed at backup stage '#{processing_step}'"
+          body = "backup '#{backup_name}' failed at backup stage '#{processing_step}'"
+          body << "\n\nLogs are available at #{hostname}:#{log_directory}"
+        end
+        email_date = Time.now.utc.strftime('%a, %d %b %y %H:%M:%S')
+        recipients = mail_config[:mail_to]
+        recipients.each do |recipient|
+          
+              body = <<BODY
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset=US-ASCII;
+	format=flowed
+To: #{recipient}
+From: #{mail_config[:mail_from]}
+Subject: #{subject}
+Date: #{email_date}
 
+#{body}
+
+BODY
+          Net::SMTP.start(mail_config[:smtp_host]) do |session|
+            session.sendmail(body, mail_config[:mail_from] , recipient)
+          end
+          
+        end
+        return :success
+      end
       
       ##
       # Get backup name - use the template defined in the configuration file

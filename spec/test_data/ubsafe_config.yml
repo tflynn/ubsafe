@@ -46,4 +46,11 @@
     :user_name: 'tracy'
     :password: <%= `cat .password` %>
     :base_backup_directory: '/Users/tracy/Temp/dev/ubsafe/backups'    
-    
+
+:backup_email:
+  :smtp_host: 'mail.helium.com'
+  :smtp_port: 25
+  :mail_from: 'devbackups@helium.com'
+  :mail_to: 
+    - 'tflynn@helium.com'
+  :mail_subject_prefix: '[ubsafe] '

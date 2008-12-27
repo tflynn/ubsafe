@@ -7,7 +7,7 @@ if script_full_path.index(Dir.getwd)
   require File.expand_path(File.join(File.dirname(__FILE__),'..','lib','ubsafe'))
 else
   require 'rubygems'
-  gem 'ubsafe','0.1'
+  gem 'ubsafe','0.2'
   require 'ubsafe'  
 end
 

@@ -545,7 +545,7 @@ BODY
           masked_full_cmd = "#{cmd_exe} #{ssh_user}@#{ssh_host} [PASSWORD] #{source_file} #{destination_dir}"
         else
           # Certs assumed if no password
-          full_cmd = "scp #{ssh_user}@#{ssh_host} #{source_file} #{destination_dir}"
+          full_cmd = "scp #{source_file} #{ssh_user}@#{ssh_host}:#{destination_dir}"
           masked_full_cmd = full_cmd
         end
         #puts "About to issue \"#{full_cmd}\""

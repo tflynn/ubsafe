@@ -86,6 +86,7 @@ module UBSafe
           Dir.chdir(tmp_dir) do |dir|
             backup_cmd_tempate = "tar cfz %s -C %s ."
             full_cmd = sprintf(backup_cmd_tempate,get_backup_file_name,source_tree)
+            @log.debug("create_source_backup #{full_cmd}")
             cmd_result = `#{full_cmd}`
             cmd_status = $?
             status = cmd_status == 0 ? :success : :failure
@@ -130,7 +131,12 @@ module UBSafe
         backup_options ||= @backup_options
         backup_name ||= @backup_name
         begin
+          # Make sure remote directory exists
           remote_directory = File.join(backup_options[:base_backup_directory],backup_name)
+          remote_cmd = "mkdir -p #{remote_directory}"
+          cmd_status, cmd_output = ssh_cmd(remote_cmd)
+          return :failure unless cmd_status == :success
+          
           backup_file_name = get_backup_file_name(backup_options)
           remote_file_name = File.join(remote_directory,backup_file_name)
           remote_file_mtime = get_remote_modified_timestamp(remote_file_name,backup_options,backup_name)

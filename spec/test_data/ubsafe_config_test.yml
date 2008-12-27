@@ -3,20 +3,20 @@
 
 :logging:
   :log_identifier: 'ubsafe'
-  :log_directory: '/Users/tracy/Temp/dev/ubsafe/logs'
+  :log_directory: './spec/logs'
   :log_filename_pattern: 'ubsafe%env%.log' # Specify ENV['UBSAFE_ENV'] to set environment
   :log_level: :debug
   :log_rolling_frequency: 'daily'
   :logs_to_retain: 30
 
 :backups:
-  :ubsafe_repo:
+  :git_repos:
     :enabled: true
-    :backup_name: 'ubsafe_repo'   # must be single string, no spaces
+    :backup_name: 'git_repos'   # must be single string, no spaces
     :backup_type: :git
-    :source_tree: '/Users/tracy/Temp/dev/ubsafe/source_repos/ubsafe'
+    :source_tree: './spec/test_data/sources/git'
     :backup_host: :test1
-    :temporary_directory: '/Users/tracy/Temp/dev/ubsafe/tmp'
+    :temporary_directory: './spec/tmp'
   # :mysql:
   #   
   # :svn:
@@ -31,7 +31,7 @@
 :backup_types:
   :git:
     :backup_style: :tar_gz
-    :backup_frequency: <%= 5.seconds %>
+    :backup_frequency: <%= 1.second %>
     :backup_file_name_template: '%f.tar.gz.%n'
     :backups_to_retain: 3
 
@@ -44,6 +44,5 @@
   :test1:
     :hostname: '192.168.1.100'
     :user_name: 'tracy'
-    :password: <%= `cat .password` %>
-    :base_backup_directory: '/Users/tracy/Temp/dev/ubsafe/backups'    
-    
+    :password: 'b3e1r4t1'
+    :base_backup_directory: '/Users/tracy/Everything/Activities/git/ubsafe/spec/tmp/targets'    

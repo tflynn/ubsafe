@@ -69,11 +69,13 @@
     :user_name: 'tflynn'
     :password: <%= `cat .ubsafe_password` %>
     :base_backup_directory: '/Users/tflynn/Everything/Activities/git/ubsafe/spec/tmp/targets'
+    :bin_dir:
   :test1:
     :hostname: '192.168.1.100'
     :user_name: 'tracy'
     :password: <%= `cat .ubsafe_password` %>
-    :base_backup_directory: '/Users/tracy/Temp/dev/ubsafe/backups'    
+    :base_backup_directory: '/Users/tracy/Temp/dev/ubsafe/backups'
+    :bin_dir:    
 
 :backup_email:
   :enabled: true

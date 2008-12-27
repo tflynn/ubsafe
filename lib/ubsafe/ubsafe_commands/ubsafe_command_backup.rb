@@ -475,7 +475,8 @@ BODY
       def get_remote_modified_timestamp(file_name,backup_options = nil,backup_name = nil)
         backup_options ||= @backup_options
         backup_name ||= @backup_name
-        remote_cmd = "ubsafe_file_mtime #{file_name}"
+        remote_bin_dir = backup_options[:bin_dir] ? "#{backup_options[:bin_dir]}/" : ''
+        remote_cmd = "#{remote_bin_dir}ubsafe_file_mtime #{file_name}"
         cmd_status, cmd_output = ssh_cmd(remote_cmd,backup_options,backup_name)
         file_mtime = nil
         if cmd_status == :success and (not cmd_output.empty?) and (cmd_output[0] != '')

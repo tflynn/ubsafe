@@ -2,6 +2,7 @@ spec/tmp
 spec/tmp/*
 ubsafe.kpf
 spec/logs
-.password
+.ubsafe_password
+.ubsafe_mysqlpassword
 pkg
 pkg/*

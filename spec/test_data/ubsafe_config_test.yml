@@ -80,3 +80,4 @@
   :mail_to: 
     - 'tflynn@helium.com'
   :mail_subject_prefix: '[ubsafe] '
+  :mail_style: :smtp # or :cat_sendmail

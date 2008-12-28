@@ -1,5 +1,6 @@
 require 'parsedate'
 require 'net/smtp'
+require 'tmpdir'
 
 module UBSafe
 
@@ -382,10 +383,22 @@ Date: #{email_date}
 #{body}
 
 BODY
-          Net::SMTP.start(mail_config[:smtp_host]) do |session|
-            session.sendmail(body, mail_config[:mail_from] , recipient)
+         if mail_config[:mail_style] == :smtp
+            Net::SMTP.start(mail_config[:smtp_host]) do |session|
+              session.sendmail(body, mail_config[:mail_from] , recipient)
+            end
+          else
+            tmp_dir = Dir.tmpdir
+            mail_msg_file = File.join(tmp_dir,'mail.txt')
+            File.open(mail_msg_file,'w') do |file|
+              file.put body
+            end
+            cmd = "cat #{mail_msg_file} | sendmail #{recipient}"
+            cmd_output = `#{cmd}`
+            cmd_status = $?
+            File.delete(mail_msg_file)
+            @log.debug("email_notify: cat_sendmail status #{cmd_status} output #{cmd_output}")
           end
-          
         end
         return :success
       end

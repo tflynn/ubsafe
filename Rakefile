@@ -5,7 +5,7 @@ require 'rake/testtask'
 require 'find'
 
 name = 'ubsafe'
-version = '0.2'
+version = '0.3'
 
 gem_spec = Gem::Specification.new do |s|
   s.name = name
@@ -23,7 +23,7 @@ gem_spec = Gem::Specification.new do |s|
   
   s.bindir = "bin"
   s.executables = ['ubsafe','ubsafe_file_mtime','ubsafe_scp_cmd.expect','ubsafe_ssh_cmd.expect']
-  #s.default_executable = "ubsafe"
+  s.default_executable = "ubsafe"
   
   s.add_dependency("rspec", "1.1.8")
   s.add_dependency("logging", "0.9.4")

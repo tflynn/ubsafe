@@ -78,10 +78,11 @@
     :bin_dir:    
 
 :backup_email:
-  :enabled: true
+  :enabled: false
   :smtp_host: 'mail.helium.com'
   :smtp_port: 25
   :mail_from: 'devbackups@helium.com'
   :mail_to: 
     - 'tflynn@helium.com'
   :mail_subject_prefix: '[ubsafe] '
+  :mail_style: :smtp # or :cat_sendmail

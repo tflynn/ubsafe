@@ -80,7 +80,7 @@ module Logging::Appenders
         code = <<-CODE
         def sufficiently_aged?
           now = Time.now.utc
-          start = ::File.mtime(@age_fn)
+          start = ::File.mtime(@age_fn).utc
           if (now.day != start.day) or (now - start) > 86400
             return true
           end
@@ -91,7 +91,7 @@ module Logging::Appenders
         FileUtils.touch(@age_fn) unless test(?f, @age_fn)
         code = <<-CODE
         def sufficiently_aged?
-          if (Time.now.utc - ::File.mtime(@age_fn)) > 604800
+          if (Time.now.utc - ::File.mtime(@age_fn).utc) > 604800
             return true
           end
           false
@@ -102,7 +102,7 @@ module Logging::Appenders
         code = <<-CODE
         def sufficiently_aged?
           now = Time.now.utc
-          start = ::File.mtime(@age_fn)
+          start = ::File.mtime(@age_fn).utc
           if (now.month != start.month) or (now - start) > 2678400
             return true
           end
@@ -114,7 +114,7 @@ module Logging::Appenders
         FileUtils.touch(@age_fn) unless test(?f, @age_fn)
         code = <<-CODE
         def sufficiently_aged?
-          if (Time.now.utc - ::File.mtime(@age_fn)) > @age
+          if (Time.now.utc - ::File.mtime(@age_fn).utc) > @age
             return true
           end
           false

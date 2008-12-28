@@ -17,6 +17,10 @@ module UBSafe
       # @return [UBSafe::Config] Singleton instance of UBSafe::Config
       #
       def config
+        if ARGV.nil? or ARGV.empty?
+          puts "ubsafe: No configuration options specified. Exiting ..."
+          exit 1
+        end
         if (not defined?(@@config_instance)) or @@config_instance.nil?
           @@config_instance = UBSafe::Config.new
         end

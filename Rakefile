@@ -22,7 +22,7 @@ gem_spec = Gem::Specification.new do |s|
   s.require_paths << 'lib'
   
   s.bindir = "bin"
-  s.executables = ['ubsafe','ubsafe_file_mtime','ubsafe_scp_cmd.expect','ubsafe_ssh_cmd.expect']
+  s.executables = ['ubsafe','ubsafer','ubsafe_file_mtime','ubsafe_scp_cmd.expect','ubsafe_ssh_cmd.expect']
   s.default_executable = "ubsafe"
   
   s.add_dependency("rspec", "1.1.8")

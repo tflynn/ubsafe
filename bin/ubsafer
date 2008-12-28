@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+
+# If we're in development mode - i.e running in the root of the gem source
+script_dir = File.dirname(File.expand_path(__FILE__))
+current_dir = Dir.getwd
+if script_dir.index(current_dir) 
+  unless defined?(::UBSAFE_ROOT)
+    puts "ubsafe: WARNING operating in development mode"
+    UBSAFE_ROOT = current_dir
+    require File.expand_path(File.join(current_dir, 'lib', 'ubsafe','extensions', 'ubsafe_extensions'))
+    require File.join_from_here('ubsafe','ubsafe_config')
+    require File.join_from_here('ubsafe','ubsafe_commands','ubsafe_commands')
+  end
+else
+  gem 'ubsafe','0.3'
+  require 'ubsafe'
+end
+
+UBSafe::Commands::Backup.instance(ARGV).backup
+

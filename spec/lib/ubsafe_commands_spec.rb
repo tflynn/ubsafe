@@ -11,7 +11,7 @@ describe 'UBSafe::Commands' do
   it 'should allow a template-driven specification of the backup file name' do
     config_file_name = './spec/test_data/ubsafe_config_test.yml'
     backup_name = 'git_repos'
-    args = ['-c',config_file_name, '-n', backup_name]
+    args = ['--config',config_file_name, '-n', backup_name]
     backup_cmd = UBSafe::Commands::Backup.new(args)
     config = UBSafe::Config.config
     # Default pattern from config - '%f.tar.gz.%n'
@@ -31,7 +31,7 @@ describe 'UBSafe::Commands' do
   it "should allow the issuing of a (remote) ssh command" do
     config_file_name = './spec/test_data/ubsafe_config_test.yml'
     backup_name = 'git_repos'
-    args = ['-c',config_file_name, '-n', backup_name]
+    args = ['--config',config_file_name, '-n', backup_name]
     backup_cmd = UBSafe::Commands::Backup.new(args)
     config = UBSafe::Config.config
     # Default pattern from config - '%f.tar.gz.%n'
@@ -53,7 +53,7 @@ describe 'UBSafe::Commands' do
   it 'should create a backup file in the specified location with the specified contents' do
     config_file_name = './spec/test_data/ubsafe_config_test.yml'
     backup_name = 'git_repos'
-    args = ['-c',config_file_name, '-n', backup_name]
+    args = ['--config',config_file_name, '-n', backup_name]
     backup_cmd = UBSafe::Commands::Backup.new(args)
     config = UBSafe::Config.config
     # Default pattern from config - '%f.tar.gz.%n'
@@ -78,7 +78,7 @@ describe 'UBSafe::Commands' do
   it 'should roll backups according to settings' do
     config_file_name = './spec/test_data/ubsafe_config_test.yml'
     backup_name = 'git_repos'
-    args = ['-c',config_file_name, '-n', backup_name]
+    args = ['--config',config_file_name, '-n', backup_name]
     config = UBSafe::Config.config
     config.load(args)
     backup_options = config.full_options(backup_name)
@@ -134,7 +134,7 @@ describe 'UBSafe::Commands' do
   it "should roll files when they age appropriately" do
     config_file_name = './spec/test_data/ubsafe_config_test.yml'
     backup_name = 'git_repos'
-    args = ['-c',config_file_name, '-n', backup_name]
+    args = ['--config',config_file_name, '-n', backup_name]
     config = UBSafe::Config.config
     config.load(args)
     backup_options = config.full_options(backup_name)
@@ -228,7 +228,7 @@ describe 'UBSafe::Commands' do
     
     config_file_name = './spec/test_data/ubsafe_config_test.yml'
     backup_name = 'git_repos'
-    args = ['-c',config_file_name, '-n', backup_name]
+    args = ['--config',config_file_name, '-n', backup_name]
     backup_cmd = UBSafe::Commands::Backup.new(args)
     config = UBSafe::Config.config
   
@@ -251,7 +251,7 @@ describe 'UBSafe::Commands' do
   it "should perform a full backup and clean up after itself" do
     config_file_name = './spec/test_data/ubsafe_config_test.yml'
     backup_name = 'git_repos'
-    args = ['-c',config_file_name, '-n', backup_name]
+    args = ['--config',config_file_name, '-n', backup_name]
     backup_cmd = UBSafe::Commands::Backup.new(args)
     config = UBSafe::Config.config
     backup_options = config.full_options(backup_name)

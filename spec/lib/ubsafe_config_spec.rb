@@ -19,7 +19,7 @@ describe 'UBSafe::Config' do
   
   it 'should allow a configuration file to be specified from a parameter' do
     config_file_name = './spec/test_data/ubsafe_config_test.yml'
-    args = ['-c',config_file_name]
+    args = ['--config',config_file_name]
     config = UBSafe::Config.config
     config.load(args)
     config.options[:config_file].should == config_file_name
@@ -30,7 +30,7 @@ describe 'UBSafe::Config' do
     config_file_name = 'ubsafe_config_test.yml'
     ENV['UBSAFE_CONFIG_FILE'] = config_file_name
     config_file_name_2 = './spec/test_data/ubsafe_config_test.yml'
-    args = ['-c',config_file_name_2]
+    args = ['--config',config_file_name_2]
     config = UBSafe::Config.config
     config.load(args)
     config.options[:config_file].should == config_file_name_2
@@ -38,7 +38,7 @@ describe 'UBSafe::Config' do
   
   it 'should load the configuration file and make the settings accessible' do
     config_file_name = './spec/test_data/ubsafe_config_test.yml'
-    args = ['-c',config_file_name]
+    args = ['--config',config_file_name]
     config = UBSafe::Config.config
     config.load(args)
     config.options[:test_settings][:setting_one].should == '1'
@@ -46,7 +46,7 @@ describe 'UBSafe::Config' do
   
   it 'should expand any specified backup entry' do
     config_file_name = './spec/test_data/ubsafe_config_test.yml'
-    args = ['-c',config_file_name]
+    args = ['--config',config_file_name]
     config = UBSafe::Config.config
     config.load(args)
     

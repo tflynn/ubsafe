@@ -17,10 +17,6 @@ module UBSafe
       # @return [UBSafe::Config] Singleton instance of UBSafe::Config
       #
       def config
-        if ARGV.nil? or ARGV.empty?
-          puts "ubsafe: No configuration options specified. Exiting ..."
-          exit 1
-        end
         if (not defined?(@@config_instance)) or @@config_instance.nil?
           @@config_instance = UBSafe::Config.new
         end
@@ -113,7 +109,7 @@ module UBSafe
       parsed_options = {:remainder => []}
       if args and args.kind_of?(Array)
         options = OptionParser.new
-        options.on("-c","--config CONFIG_FILE", String, "Name of configuration file") {|val| parsed_options[:config_file] = val}
+        options.on("-c","--config CONFIG_FILE", String, "Name of configuration file") {|val| parsed_options[:config_file] = val }
         options.on("-n","--name BACKUP_NAME", String, 'Backup Name') {|val| parsed_options[:backup_name] = val.downcase.to_sym}
         parsed_options[:remainder] = options.parse(*args)
         parsed_options[:options_help_text] = options.to_s

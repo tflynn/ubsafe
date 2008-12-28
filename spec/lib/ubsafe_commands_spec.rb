@@ -259,7 +259,7 @@ describe 'UBSafe::Commands' do
     # For testing, we can cheat since we're on the same file system
     remote_directory = File.expand_path(File.join(backup_options[:base_backup_directory],backup_name))
     FileUtils.mkdir_p(remote_directory)
-
+  
     cmd_status = backup_cmd.backup
     cmd_status.should == 0
     

@@ -18,11 +18,11 @@ gem_spec = Gem::Specification.new do |s|
 
   s.test_files = FileList['test/**/*']
 
-  s.files = FileList['lib/**/*.rb', 'README', 'doc/**/*.*']
+  s.files = FileList["bin/*", 'lib/**/*.rb', 'README', 'doc/**/*.*']
   s.require_paths << 'lib'
   
   s.bindir = "bin"
-  s.executables = ['ubsafe','ubsafer','ubsafe_file_mtime','ubsafe_scp_cmd.expect','ubsafe_ssh_cmd.expect']
+  s.executables = ['ubsafe']
   s.default_executable = "ubsafe"
   
   s.add_dependency("rspec", "1.1.8")

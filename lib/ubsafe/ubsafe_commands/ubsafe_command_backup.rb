@@ -55,8 +55,9 @@ module UBSafe
         # Rotate destination files
         # Copy to destination
         # Remove from source tree
-        backup_steps = [:before_source_backup,:create_source_backup,:after_source_backup,
+        backup_steps = [
           :before_rotate_destination_files, :rotate_destination_files, :after_rotate_destination_files,
+          :before_source_backup,:create_source_backup,:after_source_backup,
           :before_copy_backup, :copy_backup, :after_copy_backup,
           :before_clean_source, :clean_source, :after_clean_source
           ]
@@ -102,6 +103,9 @@ module UBSafe
 
         backup_options ||= @backup_options
         backup_name ||= @backup_name
+        
+        # Don't bother to create the backup if it already exists on the destination - i.e. hasn't been rolled
+        return :success if remote_file_exists?
         
         # Fully qualify directories
         source_tree = File.expand_path(backup_options[:source_tree])
@@ -287,6 +291,16 @@ module UBSafe
       end
 
       ##
+      # Create and copy backup
+      #
+      # @param [Hash] backup_options
+      # @param [String] backup_name
+      # @return [Symbol] :success or :failure
+      #
+      def create_and_copy_backup(backup_options = nil,backup_name = nil)
+
+      end
+      ##
       # Copy backup 
       #
       # @param [Hash] backup_options
@@ -298,10 +312,15 @@ module UBSafe
         backup_name ||= @backup_name
         # Fully qualify directories
         tmp_dir = File.expand_path(backup_options[:temporary_directory])
-        backup_file_name = File.join(tmp_dir,get_backup_file_name(backup_options))
+        backup_file_name = get_backup_file_name(backup_options)
+        qualified_backup_file_name = File.join(tmp_dir,backup_file_name)
         remote_directory_name = File.join(backup_options[:base_backup_directory],backup_name)
-        cmd_status, cmd_output = scp_cmd(backup_file_name,remote_directory_name,backup_options,backup_name)
-        return :failure unless cmd_status == :success
+        qualified_remote_file_name = File.join(remote_directory_name,backup_file_name)
+        unless remote_file_exists?(qualified_remote_file_name)
+          # Only copy file if it's not there
+          cmd_status, cmd_output = scp_cmd(qualified_backup_file_name,remote_directory_name,backup_options,backup_name)
+          return :failure unless cmd_status == :success
+        end
         return :success
       end
 
@@ -369,7 +388,7 @@ module UBSafe
         recipients = mail_config[:mail_to]
         recipients.each do |recipient|
           
-              body = <<BODY
+              full_body = <<BODY
 Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Type: text/plain;
@@ -385,15 +404,16 @@ Date: #{email_date}
 BODY
          if mail_config[:mail_style] == :smtp
             Net::SMTP.start(mail_config[:smtp_host]) do |session|
-              session.sendmail(body, mail_config[:mail_from] , recipient)
+              session.sendmail(full_body, mail_config[:mail_from] , recipient)
             end
           else
             tmp_dir = Dir.tmpdir
             mail_msg_file = File.join(tmp_dir,'mail.txt')
             File.open(mail_msg_file,'w') do |file|
-              file.put body
+              file.write full_body
             end
             cmd = "cat #{mail_msg_file} | sendmail #{recipient}"
+            #puts "email_notify cat_sendmail issuing command \"#{cmd}\""
             cmd_output = `#{cmd}`
             cmd_status = $?
             File.delete(mail_msg_file)
@@ -572,6 +592,50 @@ BODY
         end
         cmd_status = cmd_status == 0 ? :success : :failure
         return [cmd_status,cmd_output_cleaned]
+      end
+      
+      ##
+      # Does remote file exist?
+      #
+      # @param [Hash] backup_options
+      # @param [String] backup_name
+      # @return [Boolean] true or false
+      #
+      def remote_file_exists?(remote_file_name = nil,backup_options = nil,backup_name = nil)
+        backup_options ||= @backup_options
+        backup_name ||= @backup_name
+        if remote_file_name
+          remote_directory_name = File.dirname(remote_file_name)
+        else  
+          backup_file_name = get_backup_file_name(backup_options)
+          remote_directory_name = File.join(backup_options[:base_backup_directory],backup_name)
+          remote_file_name = File.join(remote_directory_name,backup_file_name)
+        end
+        remote_bin_dir = backup_options[:bin_dir] ? "#{backup_options[:bin_dir]}/" : ''
+        remote_cmd = "#{remote_bin_dir}ubsafe_file_exists #{remote_file_name}"
+        cmd_status, cmd_output = ssh_cmd(remote_cmd)
+        if cmd_status == :failure or cmd_output[0].chomp.strip == '1'
+          return false
+        end
+        
+        # remote_cmd = "ls #{remote_directory_name}"
+        # #puts "remote_file_exists? Looking for #{remote_directory_name}"
+        # cmd_status, cmd_output = ssh_cmd(remote_cmd)
+        # if cmd_status == :failure or cmd_output.join("\n") =~ /no\ssuch/i
+        #   #puts "remote_file_exists? #{remote_directory_name} does not exist"
+        #   return false
+        # else
+        #   remote_cmd = "ls #{remote_file_name}"
+        #   #puts "remote_file_exists? Looking for #{remote_file_name}"
+        #   cmd_status, cmd_output = ssh_cmd(remote_cmd)
+        #   #puts "remote_file_exists? cmd_status #{cmd_status}"
+        #   if cmd_status == :failure or cmd_output.join("\n") =~ /no\ssuch/i
+        #     #puts "remote_file_exists? #{remote_file_name} does not exist"
+        #     return false
+        #   end
+        # end
+        
+        return true
       end
       
     end

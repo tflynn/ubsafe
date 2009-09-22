@@ -263,6 +263,7 @@ module UBSafe
             #puts "rotate_destination_files_unconditionally file_name_previous_generation #{file_name_previous_generation}"
             remote_cmd = "mv #{File.join(remote_directory_name,file_name_current_generation)} #{File.join(remote_directory_name,file_name_previous_generation)}"
             cmd_status, cmd_output = ssh_cmd(remote_cmd)
+            @log.debug("Rotated #{File.join(remote_directory_name,file_name_current_generation)} to  #{File.join(remote_directory_name,file_name_previous_generation)} Status #{cmd_status}")
             return :failure unless cmd_status == :success
           end
           

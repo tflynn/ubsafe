@@ -35,6 +35,17 @@
     :mysql_username: 'tflynn'
     :mysql_password: <%= `cat .ubsafe_mysqlpassword` %>
     :mysql_database: 'mysql'
+  :postgres_db:
+    :enabled: true
+    :backup_name: 'test_postgres'   # must be single string, no spaces
+    :backup_type: :postgres
+    :source_tree: nil
+    :backup_host: :local
+    :temporary_directory: '/Users/tflynn/Temp/Dev/20090922/tmp'
+    :postgres_host: '10.1.10.52'
+    :postgres_port: '5432'
+    :postgres_username: 'ruby'
+    :postgres_database: 'helium_3160_development'
   #   
   # :wiki:
 :backup_defaults:
@@ -62,6 +73,13 @@
     :backup_file_name_template: '%f.tar.gz.%n'
     :backups_to_retain: 5
     :backup_class: 'UBSafe::Commands::MySqlBackup'
+  :postgres:
+    :backup_style: :tar_gz
+    :backup_frequency: :daily 
+    :backup_file_name_template: '%f.tar.gz.%n'
+    :backups_to_retain: 5
+    :backup_class: 'UBSafe::Commands::PostgresBackup'
+    
 
 :backup_hosts:
   :test:

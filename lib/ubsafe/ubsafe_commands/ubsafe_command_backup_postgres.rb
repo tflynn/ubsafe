@@ -15,7 +15,7 @@ module UBSafe
         tmp_dir = File.expand_path(@backup_options[:temporary_directory])
         postgres_tmp_dir = File.join(tmp_dir,'postgres')
         FileUtils.mkdir_p(postgres_tmp_dir)
-        cmd = "pg_dump -U#{@backup_options[:postgres_username]} -h#{@backup_options[:postgres_host]} -p#{@backup_options[:postgres_port]} #{@backup_options[:postgres_database]} >#{postgres_tmp_dir}/#{@backup_options[:postgres_database]}.sql"
+        cmd = "#{@backup_options[:postgres_bin_dir]}/pg_dump -U#{@backup_options[:postgres_username]} -h#{@backup_options[:postgres_host]} -p#{@backup_options[:postgres_port]} #{@backup_options[:postgres_database]} >#{postgres_tmp_dir}/#{@backup_options[:postgres_database]}.sql"
         @log.info("Backup #{@backup_name} \"pg_dump -U#{@backup_options[:postgres_username]} -h#{@backup_options[:postgres_host]} -p#{@backup_options[:postgres_port]} #{@backup_options[:postgres_database]} >#{postgres_tmp_dir}/#{@backup_options[:postgres_database]}.sql\"")
         cmd_output = `#{cmd}`
         cmd_status = $?

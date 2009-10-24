@@ -3,7 +3,9 @@ module UBSafe
 end
 
 require 'rubygems'
-gem 'logging','0.9.4'
+gem 'fastthread','= 1.0.7'
+require 'fastthread'
+gem 'logging','= 0.9.4'
 require 'logging'
 
 unless defined?(::UBSAFE_ROOT)

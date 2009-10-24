@@ -25,15 +25,16 @@ gem_spec = Gem::Specification.new do |s|
   s.executables = ['ubsafe','ubsafe_file_exists','ubsafe_file_mtime','ubsafe_scp_cmd.expect','ubsafe_ssh_cmd.expect','ubsafer']
   s.default_executable = "ubsafe"
   
-  s.add_dependency("rspec", "1.2.9")
-  s.add_dependency("logging", "0.9.4")
+  s.add_dependency("rspec", "= 1.2.9")
+  s.add_dependency("fastthread", "= 1.0.7")  # Patch for missing gem dependency in logging 0.9.4
+  s.add_dependency("logging", "= 0.9.4")
   
   #s.extensions << ""
   #s.extra_rdoc_files = ["README"]
   #s.has_rdoc = true
   #s.platform = "Gem::Platform::Ruby"
-  s.required_ruby_version = ">= 1.8.5"
-  s.rubyforge_project = "olioinfo"
+  #s.required_ruby_version = ">= 1.8.5"
+  #s.rubyforge_project = "olioinfo"
 end
 
 Rake::GemPackageTask.new(gem_spec) do |pkg|

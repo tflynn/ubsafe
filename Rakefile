@@ -26,7 +26,7 @@ gem_spec = Gem::Specification.new do |s|
   s.default_executable = "ubsafe"
   
   #s.add_dependency("rspec", "= 1.2.9")
-  #s.add_dependency("fastthread", "= 1.0.7")  # Patch for missing gem dependency in logging 0.9.4
+  s.add_dependency("fastthread", "= 1.0.7")  # Patch for missing gem dependency in logging 0.9.4
   s.add_dependency("logging", "= 0.9.4")
   
   #s.extensions << ""

@@ -14,7 +14,7 @@ if script_dir.index(current_dir)
     require File.join_from_here('ubsafe','ubsafe_commands','ubsafe_commands')
   end
 else
-  gem 'ubsafe','0.5'
+  gem 'ubsafe','0.6'
   require 'ubsafe'
 end
 

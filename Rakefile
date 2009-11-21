@@ -5,7 +5,7 @@ require 'rake/testtask'
 require 'find'
 
 name = 'ubsafe'
-version = '0.5'
+version = '0.6'
 
 gem_spec = Gem::Specification.new do |s|
   s.name = name
@@ -25,8 +25,8 @@ gem_spec = Gem::Specification.new do |s|
   s.executables = ['ubsafe','ubsafe_file_exists','ubsafe_file_mtime','ubsafe_scp_cmd.expect','ubsafe_ssh_cmd.expect','ubsafer']
   s.default_executable = "ubsafe"
   
-  s.add_dependency("rspec", "= 1.2.9")
-  s.add_dependency("fastthread", "= 1.0.7")  # Patch for missing gem dependency in logging 0.9.4
+  #s.add_dependency("rspec", "= 1.2.9")
+  #s.add_dependency("fastthread", "= 1.0.7")  # Patch for missing gem dependency in logging 0.9.4
   s.add_dependency("logging", "= 0.9.4")
   
   #s.extensions << ""
